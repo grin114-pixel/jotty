@@ -5,7 +5,20 @@ import App from './App.tsx'
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    void navigator.serviceWorker.register('/sw.js')
+    void navigator.serviceWorker
+      .register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      })
+      .then((registration) => {
+        void registration.update()
+      })
+  })
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      void navigator.serviceWorker.getRegistration().then((r) => void r?.update())
+    }
   })
 }
 
