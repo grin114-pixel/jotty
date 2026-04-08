@@ -57,7 +57,7 @@
 }
 
 .pin-card .app-badge span {
-  font-size: 110%;
+  font-size: 121%;
 }
 
 .app-badge svg,
@@ -230,7 +230,7 @@
 }
 
 .pin-entry-field {
-  margin-top: 3rem;
+  margin-top: 4.5rem;
 }
 
 .pin-change-button {
@@ -280,7 +280,7 @@
 
 .topbar-title h1 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: calc(1.35rem * 1.1);
   line-height: 1.2;
   color: var(--jotty-green);
   font-weight: 800;

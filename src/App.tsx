@@ -467,13 +467,13 @@ function App() {
                 <span>Jotty</span>
               </div>
               <label className="field pin-entry-field">
-                <span className="sr-only">PIN 입력</span>
                 <input
                   type="password"
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={4}
                   placeholder="0000"
+                  aria-label="PIN 4자리"
                   value={pin}
                   onChange={handlePinChange}
                 />
