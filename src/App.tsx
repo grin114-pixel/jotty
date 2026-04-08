@@ -215,7 +215,7 @@ function App() {
       const inputHash = await hashPin(pin)
 
       if (inputHash !== expectedHash) {
-        setAuthError('PIN 번호가 일치하지 않습니다.')
+        setAuthError('입력한 PIN이 일치하지 않습니다.')
         return
       }
     } catch {
@@ -252,7 +252,7 @@ function App() {
       const currentHash = await hashPin(currentPinInput)
 
       if (currentHash !== expectedHash) {
-        setPinChangeError('현재 PIN 번호가 일치하지 않습니다.')
+        setPinChangeError('현재 PIN이 일치하지 않습니다.')
         return
       }
 
@@ -466,18 +466,19 @@ function App() {
                 <NoteIcon />
                 <span>Jotty</span>
               </div>
-              <label className="field pin-entry-field">
+              <div className="pin-entry-field">
                 <input
                   type="password"
                   inputMode="numeric"
-                  autoComplete="one-time-code"
+                  autoComplete="off"
                   maxLength={4}
                   placeholder="0000"
-                  aria-label="PIN 4자리"
+                  aria-label="4자리 숫자 입력"
                   value={pin}
                   onChange={handlePinChange}
+                  className="pin-entry-input"
                 />
-              </label>
+              </div>
               <label className="checkbox-row">
                 <input
                   type="checkbox"
