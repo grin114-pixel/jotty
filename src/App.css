@@ -58,6 +58,7 @@
 
 .pin-card .app-badge span {
   font-size: 121%;
+  font-weight: 800;
 }
 
 .app-badge svg,
@@ -114,6 +115,11 @@
 
 .field input:focus,
 .field-textarea:focus,
+.pin-entry-input:focus,
+.note-edit-textarea:focus {
+  outline: none;
+}
+
 .primary-button:focus,
 .secondary-button:focus,
 .text-button:focus,
@@ -246,10 +252,6 @@
   font-weight: 400;
 }
 
-.pin-entry-input:focus {
-  outline: 3px solid var(--jotty-green-muted);
-  outline-offset: 2px;
-}
 
 .pin-change-button {
   align-self: flex-end;
@@ -402,6 +404,10 @@
 .empty-state h2 {
   margin: 0;
   color: #0f172a;
+}
+
+.pin-card h1 {
+  font-weight: 800;
 }
 
 .composer-card,

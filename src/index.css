@@ -1,12 +1,13 @@
+@font-face {
+  font-family: 'GFVewPenGray_K';
+  src: local('GF뉴연필고딕그레이'), local('GFVewPenGray_K');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
-  font-family:
-    Inter,
-    'Noto Sans KR',
-    'Segoe UI',
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: 'GFVewPenGray_K', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #1e293b;
@@ -38,6 +39,7 @@ button,
 input,
 textarea {
   font: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
 img,

@@ -1,12 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7c3aed" />
-      <stop offset="100%" stop-color="#2563eb" />
+    <linearGradient id="jottyG" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5a9d72" />
+      <stop offset="100%" stop-color="#2f6f45" />
     </linearGradient>
   </defs>
-  <rect width="256" height="256" rx="64" fill="#f8fbff" />
-  <rect x="44" y="40" width="168" height="176" rx="32" fill="url(#g)" opacity="0.14" />
-  <path d="M85 56h75l43 43v89c0 12.15-9.85 22-22 22H85c-12.15 0-22-9.85-22-22V78c0-12.15 9.85-22 22-22Z" fill="none" stroke="url(#g)" stroke-width="16" stroke-linejoin="round"/>
-  <path d="M160 56v43h43M96 117h64M96 149h64M96 181h48" fill="none" stroke="url(#g)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="256" height="256" rx="64" fill="#e9f2e6" />
+  <rect x="44" y="40" width="168" height="176" rx="32" fill="url(#jottyG)" opacity="0.16" />
+  <path
+    d="M85 56h75l43 43v89c0 12.15-9.85 22-22 22H85c-12.15 0-22-9.85-22-22V78c0-12.15 9.85-22 22-22Z"
+    fill="none"
+    stroke="url(#jottyG)"
+    stroke-width="16"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M160 56v43h43M96 117h64M96 149h64M96 181h48"
+    fill="none"
+    stroke="url(#jottyG)"
+    stroke-width="16"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>
