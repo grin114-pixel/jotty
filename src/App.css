@@ -5,6 +5,7 @@
   --jotty-green-muted: rgba(47, 111, 69, 0.14);
   --jotty-outline: rgba(47, 111, 69, 0.22);
   --jotty-text: #3f4e46;
+  --jotty-note-stack-gap: 54px;
 }
 
 .auth-shell,
@@ -373,7 +374,7 @@
 .content-area {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--jotty-note-stack-gap);
 }
 
 .composer-card {
@@ -420,15 +421,19 @@
   gap: 16px;
 }
 
+.composer-card .memo-form {
+  gap: 8px;
+}
+
 .memo-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .note-list {
-  gap: 54px;
+  gap: var(--jotty-note-stack-gap);
 }
 
 .note-outer {
