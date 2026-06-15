@@ -1,6 +1,6 @@
 {
-  "name": "Jotty",
-  "short_name": "Jotty",
+  "name": "Dear English",
+  "short_name": "Dear English",
   "description": "빠르게 적고 저장하는 개인 메모장 앱",
   "start_url": "/",
   "display": "standalone",

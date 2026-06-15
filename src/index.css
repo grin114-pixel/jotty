@@ -1,14 +1,41 @@
 @font-face {
-  font-family: 'NanumSquareNeo';
+  font-family: 'MaruBuri';
   font-style: normal;
-  font-weight: 300 900;
+  font-weight: 300;
   font-display: swap;
-  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeo-Variable.woff')
-    format('woff');
+  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Light.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'MaruBuri';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'MaruBuri';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2')
+    format('woff2');
+}
+
+@font-face {
+  font-family: 'MaruBuri';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Bold.woff2')
+    format('woff2');
 }
 
 :root {
-  font-family: 'NanumSquareNeo', system-ui, sans-serif;
+  font-family: 'MaruBuri', serif;
   line-height: 1.65;
   font-weight: 400;
   color: #1e293b;
