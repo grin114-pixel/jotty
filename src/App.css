@@ -6,6 +6,8 @@
   --jotty-outline: rgba(91, 137, 201, 0.22);
   --jotty-text: #3a4558;
   --jotty-note-stack-gap: 40px;
+  --jotty-content-line-height: 1.85;
+  --jotty-content-letter-spacing: 0.03em;
 }
 
 .auth-shell,
@@ -115,7 +117,8 @@
 
 .memo-textarea {
   font-size: 99%;
-  line-height: 1.65;
+  line-height: var(--jotty-content-line-height);
+  letter-spacing: var(--jotty-content-letter-spacing);
   min-height: 3.6em;
   resize: none;
   overflow: hidden;
@@ -575,13 +578,15 @@
   overflow-wrap: anywhere;
   font-size: 99%;
   font-weight: 400;
-  line-height: 1.65;
+  line-height: var(--jotty-content-line-height);
+  letter-spacing: var(--jotty-content-letter-spacing);
 }
 
 .note-edit-textarea,
 .note-edit-editor {
   font-size: 99%;
-  line-height: 1.65;
+  line-height: var(--jotty-content-line-height);
+  letter-spacing: var(--jotty-content-letter-spacing);
   font-weight: 400;
   width: 100%;
   box-sizing: border-box;
