@@ -1,23 +1,22 @@
 import {
-  type ChangeEvent,
   type FormEvent,
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react'
 import './App.css'
+import { FormattedNoteEditor } from './components/FormattedNoteEditor'
+import {
+  applyRedFormat,
+  applyRedFormatToEditor,
+  normalizeMarkerContent,
+  renderFormattedContent,
+} from './lib/noteFormat'
 import { type Database, getSupabaseClient, isSupabaseConfigured } from './lib/supabase'
-import { hashPin } from './lib/pin'
 
 type NoteRecord = Database['public']['Tables']['jotty_notes']['Row']
-
-const AUTH_STORAGE_KEY = 'jotty.remembered-auth'
-const PIN_HASH_STORAGE_KEY = 'jotty.pin-hash'
-const DEFAULT_PIN = '1234'
-const SETTINGS_ROW_ID = 'global'
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -53,15 +52,6 @@ function autosizeTextarea(element: HTMLTextAreaElement | null) {
 }
 
 function App() {
-  const [isCheckingRememberedAuth, setIsCheckingRememberedAuth] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [rememberDevice, setRememberDevice] = useState(false)
-  const [pin, setPin] = useState('')
-  const [authError, setAuthError] = useState('')
-  const [isChangingPin, setIsChangingPin] = useState(false)
-  const [currentPinInput, setCurrentPinInput] = useState('')
-  const [newPinInput, setNewPinInput] = useState('')
-  const [pinChangeError, setPinChangeError] = useState('')
   const [memoInput, setMemoInput] = useState('')
   const [notes, setNotes] = useState<NoteRecord[]>([])
   const [isLoadingNotes, setIsLoadingNotes] = useState(false)
@@ -73,19 +63,9 @@ function App() {
   const [statusMessage, setStatusMessage] = useState('')
 
   const memoTextareaRef = useRef<HTMLTextAreaElement>(null)
-  const editTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const editEditorRef = useRef<HTMLDivElement>(null)
 
-  const defaultPin = String(import.meta.env.VITE_APP_PIN ?? DEFAULT_PIN).trim()
   const supabaseReady = isSupabaseConfigured()
-
-  const defaultPinHashPromise = useMemo(() => hashPin(defaultPin), [defaultPin])
-
-  useEffect(() => {
-    const rememberedAuth = window.localStorage.getItem(AUTH_STORAGE_KEY) === 'true'
-    setRememberDevice(rememberedAuth)
-    setIsAuthenticated(rememberedAuth)
-    setIsCheckingRememberedAuth(false)
-  }, [])
 
   useEffect(() => {
     if (!statusMessage) {
@@ -101,62 +81,7 @@ function App() {
 
   useLayoutEffect(() => {
     autosizeTextarea(memoTextareaRef.current)
-  }, [memoInput, isAuthenticated])
-
-  useLayoutEffect(() => {
-    if (editingNoteId) {
-      autosizeTextarea(editTextareaRef.current)
-    }
-  }, [editDraft, editingNoteId])
-
-  const ensureRemotePinHash = useCallback(async () => {
-    const fallbackHash = await defaultPinHashPromise
-
-    if (!supabaseReady) {
-      return fallbackHash
-    }
-
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase
-      .from('jotty_app_settings')
-      .select('pin_hash')
-      .eq('id', SETTINGS_ROW_ID)
-      .maybeSingle()
-
-    if (error) {
-      throw error
-    }
-
-    if (data?.pin_hash) {
-      return data.pin_hash
-    }
-
-    const { error: upsertError } = await supabase.from('jotty_app_settings').upsert({
-      id: SETTINGS_ROW_ID,
-      pin_hash: fallbackHash,
-    })
-
-    if (upsertError) {
-      throw upsertError
-    }
-
-    return fallbackHash
-  }, [defaultPinHashPromise, supabaseReady])
-
-  const resolveExpectedPinHash = useCallback(async () => {
-    try {
-      const remoteHash = await ensureRemotePinHash()
-      window.localStorage.setItem(PIN_HASH_STORAGE_KEY, remoteHash)
-      return remoteHash
-    } catch {
-      const saved = window.localStorage.getItem(PIN_HASH_STORAGE_KEY)
-      if (saved) {
-        return saved
-      }
-
-      return defaultPinHashPromise
-    }
-  }, [defaultPinHashPromise, ensureRemotePinHash])
+  }, [memoInput])
 
   const loadNotes = useCallback(async () => {
     if (!supabaseReady) {
@@ -189,109 +114,8 @@ function App() {
   }, [supabaseReady])
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setNotes([])
-      setDataError('')
-      return
-    }
-
     void loadNotes()
-  }, [isAuthenticated, loadNotes])
-
-  function handlePinDigits(setter: (value: string) => void, event: ChangeEvent<HTMLInputElement>) {
-    setter(event.target.value.replace(/\D/g, '').slice(0, 4))
-  }
-
-  async function handlePinSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (pin.length !== 4) {
-      setAuthError('PIN 4자리를 입력해 주세요.')
-      return
-    }
-
-    try {
-      const expectedHash = await resolveExpectedPinHash()
-      const inputHash = await hashPin(pin)
-
-      if (inputHash !== expectedHash) {
-        setAuthError('입력한 PIN이 일치하지 않습니다.')
-        return
-      }
-    } catch {
-      setAuthError('PIN 확인 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.')
-      return
-    }
-
-    if (rememberDevice) {
-      window.localStorage.setItem(AUTH_STORAGE_KEY, 'true')
-    } else {
-      window.localStorage.removeItem(AUTH_STORAGE_KEY)
-    }
-
-    setAuthError('')
-    setPin('')
-    setIsAuthenticated(true)
-  }
-
-  async function handlePinChangeSave() {
-    setPinChangeError('')
-
-    if (currentPinInput.length !== 4) {
-      setPinChangeError('현재 PIN 4자리를 입력해 주세요.')
-      return
-    }
-
-    if (newPinInput.length !== 4) {
-      setPinChangeError('새 PIN 4자리를 입력해 주세요.')
-      return
-    }
-
-    try {
-      const expectedHash = await resolveExpectedPinHash()
-      const currentHash = await hashPin(currentPinInput)
-
-      if (currentHash !== expectedHash) {
-        setPinChangeError('현재 PIN이 일치하지 않습니다.')
-        return
-      }
-
-      const nextHash = await hashPin(newPinInput)
-
-      if (supabaseReady) {
-        const supabase = getSupabaseClient()
-        const { error } = await supabase.from('jotty_app_settings').upsert({
-          id: SETTINGS_ROW_ID,
-          pin_hash: nextHash,
-        })
-
-        if (error) {
-          throw error
-        }
-      }
-
-      window.localStorage.setItem(PIN_HASH_STORAGE_KEY, nextHash)
-      window.localStorage.removeItem(AUTH_STORAGE_KEY)
-      setRememberDevice(false)
-      setIsAuthenticated(false)
-      setIsChangingPin(false)
-      setCurrentPinInput('')
-      setNewPinInput('')
-      setPin('')
-      setAuthError('')
-      setStatusMessage('PIN을 변경했어요. 다시 로그인해 주세요.')
-    } catch (error) {
-      setPinChangeError(getErrorMessage(error))
-    }
-  }
-
-  function handlePinChange(event: ChangeEvent<HTMLInputElement>) {
-    setPin(event.target.value.replace(/\D/g, '').slice(0, 4))
-
-    if (authError) {
-      setAuthError('')
-    }
-  }
+  }, [loadNotes])
 
   function startEdit(note: NoteRecord) {
     setEditingNoteId(note.id)
@@ -309,7 +133,7 @@ function App() {
       return
     }
 
-    const content = editDraft.trim()
+    const content = normalizeMarkerContent(editDraft.trim())
 
     if (!content) {
       setStatusMessage('메모 내용을 입력해 주세요.')
@@ -379,7 +203,7 @@ function App() {
       return
     }
 
-    const content = memoInput.trim()
+    const content = normalizeMarkerContent(memoInput.trim())
 
     if (!content) {
       setStatusMessage('메모 내용을 먼저 입력해 주세요.')
@@ -407,262 +231,211 @@ function App() {
     }
   }
 
-  function handleLock() {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY)
-    setRememberDevice(false)
-    setPin('')
-    setIsAuthenticated(false)
-    setStatusMessage('잠금 화면으로 이동했어요.')
+  function handleRedFormat(
+    textarea: HTMLTextAreaElement | null,
+    value: string,
+    setValue: (nextValue: string) => void,
+  ) {
+    if (!textarea) {
+      return
+    }
+
+    const result = applyRedFormat(value, textarea.selectionStart, textarea.selectionEnd)
+
+    if (!result) {
+      setStatusMessage('빨간색으로 바꿀 글자를 먼저 선택해 주세요.')
+      return
+    }
+
+    setValue(result.nextValue)
+
+    requestAnimationFrame(() => {
+      textarea.focus()
+      textarea.setSelectionRange(result.nextSelectionStart, result.nextSelectionEnd)
+      autosizeTextarea(textarea)
+    })
+  }
+
+  function handleEditRedFormat() {
+    const editor = editEditorRef.current
+
+    if (!editor || !applyRedFormatToEditor(editor)) {
+      setStatusMessage('빨간색으로 바꿀 글자를 먼저 선택해 주세요.')
+      return
+    }
+
+    editor.dispatchEvent(new InputEvent('input', { bubbles: true }))
   }
 
   return (
-    isCheckingRememberedAuth ? (
-      <div className="auth-shell">
-        <div className="pin-card">
-          <p className="pin-subtitle">Jotty를 준비하는 중...</p>
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="topbar-title">
+          <div className="app-icon">
+            <img src="/header-icon.png" alt="" className="app-icon-image" />
+          </div>
+          <h1>Dear English</h1>
         </div>
-      </div>
-    ) : !isAuthenticated ? (
-      <div className="auth-shell">
-        <form className="pin-card" onSubmit={handlePinSubmit}>
-          {isChangingPin ? (
-            <>
-              <h1>PIN 변경하기</h1>
-              <div className="pin-change-panel">
-                <label className="field">
-                  <span>현재 PIN</span>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="현재 PIN"
-                    value={currentPinInput}
-                    onChange={(event) => handlePinDigits(setCurrentPinInput, event)}
+      </header>
+
+      {!supabaseReady ? (
+        <section className="notice-card">
+          <h2>Supabase 연결이 필요해요</h2>
+          <p>`.env`에 URL과 Anon Key를 넣은 뒤 다시 실행해 주세요.</p>
+          <p>테이블 설정은 `supabase-schema.sql` 파일에 정리해 두었습니다.</p>
+        </section>
+      ) : null}
+
+      {dataError ? (
+        <section className="notice-card error-card">
+          <h2>처리 중 문제가 생겼어요</h2>
+          <p>{dataError}</p>
+        </section>
+      ) : null}
+
+      {statusMessage ? <div className="toast-message">{statusMessage}</div> : null}
+
+      <main className="content-area">
+        <section className="composer-card">
+          <form className="memo-form" onSubmit={handleSaveNote}>
+            <div className="memo-input-stack">
+              <div className="memo-white-panel">
+                <label className="field field-plain">
+                  <span className="sr-only">메모</span>
+                  <textarea
+                    ref={memoTextareaRef}
+                    className="field-textarea memo-textarea"
+                    rows={1}
+                    value={memoInput}
+                    onChange={(event) => {
+                      setMemoInput(event.target.value)
+                      requestAnimationFrame(() => autosizeTextarea(memoTextareaRef.current))
+                    }}
                   />
                 </label>
-                <label className="field">
-                  <span>새 PIN</span>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="새 PIN"
-                    value={newPinInput}
-                    onChange={(event) => handlePinDigits(setNewPinInput, event)}
-                  />
-                </label>
-                {pinChangeError ? <p className="error-text">{pinChangeError}</p> : null}
-                <button type="button" className="secondary-button" onClick={() => void handlePinChangeSave()}>
-                  PIN 저장
-                </button>
-                <button type="button" className="text-button" onClick={() => setIsChangingPin(false)}>
-                  로그인으로 돌아가기
-                </button>
+                <div className="memo-format-toolbar">
+                  <button
+                    type="button"
+                    className="format-button format-button--red"
+                    aria-label="선택한 글자 빨간색"
+                    onClick={() => handleRedFormat(memoTextareaRef.current, memoInput, setMemoInput)}
+                  >
+                    빨간색
+                  </button>
+                </div>
               </div>
-            </>
-          ) : (
-            <>
-              <div className="app-badge">
-                <NoteIcon />
-                <span>Jotty</span>
-              </div>
-              <div className="pin-entry-field">
-                <input
-                  type="password"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={4}
-                  placeholder="0000"
-                  aria-label="4자리 숫자 입력"
-                  value={pin}
-                  onChange={handlePinChange}
-                  className="pin-entry-input"
-                />
-              </div>
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={rememberDevice}
-                  onChange={(event) => setRememberDevice(event.target.checked)}
-                />
-                <span>이 기기 기억하기</span>
-              </label>
-              {authError ? <p className="error-text">{authError}</p> : null}
-              <button type="submit" className="primary-button">
-                입장하기
-              </button>
-              <button
-                type="button"
-                className="text-button pin-change-button"
-                onClick={() => {
-                  setIsChangingPin(true)
-                  setPinChangeError('')
-                  setCurrentPinInput('')
-                  setNewPinInput('')
-                }}
-              >
-                PIN 변경하기
-              </button>
-            </>
-          )}
-        </form>
-      </div>
-    ) : (
-      <div className="app-shell">
-        <header className="topbar">
-          <div className="topbar-title">
-            <div className="app-icon">
-              <NoteIcon />
             </div>
-            <h1>Jotty</h1>
-          </div>
-          <div className="topbar-actions">
-            <button type="button" className="secondary-button lock-button" aria-label="잠금" onClick={handleLock}>
-              <LockIcon />
-            </button>
-          </div>
-        </header>
+            <div className="memo-actions">
+              <button type="submit" className="primary-button memo-save-button" disabled={isSavingNote}>
+                {isSavingNote ? '저장 중...' : '메모 저장'}
+              </button>
+            </div>
+          </form>
+        </section>
 
-        {!supabaseReady ? (
-          <section className="notice-card">
-            <h2>Supabase 연결이 필요해요</h2>
-            <p>`.env`에 URL, Anon Key, PIN 값을 넣은 뒤 다시 실행해 주세요.</p>
-            <p>테이블 설정은 `supabase-schema.sql` 파일에 정리해 두었습니다.</p>
-          </section>
-        ) : null}
+        <section className="notes-section">
+          {isLoadingNotes ? (
+            <section className="empty-state">
+              <p>메모 목록을 불러오는 중입니다...</p>
+            </section>
+          ) : null}
 
-        {dataError ? (
-          <section className="notice-card error-card">
-            <h2>처리 중 문제가 생겼어요</h2>
-            <p>{dataError}</p>
-          </section>
-        ) : null}
-
-        {statusMessage ? <div className="toast-message">{statusMessage}</div> : null}
-
-        <main className="content-area">
-          <section className="composer-card">
-            <form className="memo-form" onSubmit={handleSaveNote}>
-              <div className="memo-input-stack">
-                <div className="memo-white-panel">
-                  <label className="field field-plain">
-                    <span className="sr-only">메모</span>
-                    <textarea
-                      ref={memoTextareaRef}
-                      className="field-textarea memo-textarea"
-                      rows={1}
-                      value={memoInput}
-                      onChange={(event) => {
-                        setMemoInput(event.target.value)
-                        requestAnimationFrame(() => autosizeTextarea(memoTextareaRef.current))
-                      }}
-                    />
-                  </label>
-                </div>
+          {!isLoadingNotes && notes.length === 0 ? (
+            <section className="empty-state">
+              <div className="empty-illustration">
+                <NoteIcon />
               </div>
-              <div className="memo-actions">
-                <button type="submit" className="primary-button memo-save-button" disabled={isSavingNote}>
-                  {isSavingNote ? '저장 중...' : '메모 저장'}
-                </button>
-              </div>
-            </form>
-          </section>
+              <h2>아직 저장된 메모가 없어요</h2>
+              <p>위 입력창에 첫 번째 메모를 남겨보세요.</p>
+            </section>
+          ) : null}
 
-          <section className="notes-section">
-            {isLoadingNotes ? (
-              <section className="empty-state">
-                <p>메모 목록을 불러오는 중입니다...</p>
-              </section>
-            ) : null}
-
-            {!isLoadingNotes && notes.length === 0 ? (
-              <section className="empty-state">
-                <div className="empty-illustration">
-                  <NoteIcon />
-                </div>
-                <h2>아직 저장된 메모가 없어요</h2>
-                <p>위 입력창에 첫 번째 메모를 남겨보세요.</p>
-              </section>
-            ) : null}
-
-            {!isLoadingNotes ? (
-              <div className="note-list">
-                {notes.map((note) => (
-                  <div key={note.id} className="note-outer">
-                    <div className="note-white-wrap">
-                      <div className={`note-card note-body-surface${editingNoteId === note.id ? ' note-card--editing' : ''}`}>
-                        {editingNoteId === note.id ? (
-                          <textarea
-                            ref={editTextareaRef}
-                            className="field-textarea note-edit-textarea"
+          {!isLoadingNotes ? (
+            <div className="note-list">
+              {notes.map((note) => (
+                <div key={note.id} className="note-outer">
+                  <div className="note-white-wrap">
+                    <div className={`note-card note-body-surface${editingNoteId === note.id ? ' note-card--editing' : ''}`}>
+                      {editingNoteId === note.id ? (
+                        <>
+                          <FormattedNoteEditor
+                            editorRef={editEditorRef}
+                            className="note-edit-editor"
                             value={editDraft}
-                            rows={1}
-                            onChange={(event) => {
-                              setEditDraft(event.target.value)
-                              requestAnimationFrame(() => autosizeTextarea(editTextareaRef.current))
-                            }}
+                            onChange={setEditDraft}
                           />
-                        ) : (
-                          <p className="note-content">{note.content}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="note-meta-row">
-                      <span className="note-date">{formatDateLabel(note.created_at)}</span>
-                      <div className="note-card-actions">
-                        {editingNoteId === note.id ? (
-                          <>
+                          <div className="note-format-toolbar">
                             <button
                               type="button"
-                              className="note-icon-button"
-                              aria-label="수정 저장"
-                              disabled={isSavingEdit}
-                              onClick={() => void handleSaveEdit(note.id)}
+                              className="format-button format-button--red"
+                              aria-label="선택한 글자 빨간색"
+                              onMouseDown={(event) => event.preventDefault()}
+                              onClick={handleEditRedFormat}
                             >
-                              <CheckIcon />
+                              빨간색
                             </button>
-                            <button
-                              type="button"
-                              className="note-icon-button"
-                              aria-label="수정 취소"
-                              disabled={isSavingEdit}
-                              onClick={cancelEdit}
-                            >
-                              <CancelIcon />
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              className="note-icon-button"
-                              aria-label="메모 수정"
-                              disabled={editingNoteId !== null}
-                              onClick={() => startEdit(note)}
-                            >
-                              <EditIcon />
-                            </button>
-                            <button
-                              type="button"
-                              className="note-icon-button"
-                              aria-label="메모 삭제"
-                              disabled={editingNoteId !== null}
-                              onClick={() => void handleDeleteNote(note)}
-                            >
-                              <DeleteIcon />
-                            </button>
-                          </>
-                        )}
-                      </div>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="note-content">{renderFormattedContent(note.content)}</p>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : null}
-          </section>
-        </main>
-      </div>
-    )
+                  <div className="note-meta-row">
+                    <span className="note-date">{formatDateLabel(note.created_at)}</span>
+                    <div className="note-card-actions">
+                      {editingNoteId === note.id ? (
+                        <>
+                          <button
+                            type="button"
+                            className="note-icon-button"
+                            aria-label="수정 저장"
+                            disabled={isSavingEdit}
+                            onClick={() => void handleSaveEdit(note.id)}
+                          >
+                            <CheckIcon />
+                          </button>
+                          <button
+                            type="button"
+                            className="note-icon-button"
+                            aria-label="수정 취소"
+                            disabled={isSavingEdit}
+                            onClick={cancelEdit}
+                          >
+                            <CancelIcon />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="note-icon-button"
+                            aria-label="메모 수정"
+                            disabled={editingNoteId !== null}
+                            onClick={() => startEdit(note)}
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            type="button"
+                            className="note-icon-button"
+                            aria-label="메모 삭제"
+                            disabled={editingNoteId !== null}
+                            onClick={() => void handleDeleteNote(note)}
+                          >
+                            <DeleteIcon />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      </main>
+    </div>
   )
 }
 
@@ -747,34 +520,6 @@ function CancelIcon() {
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth="1.8"
-      />
-    </svg>
-  )
-}
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d="M7.5 11V8.75a4.5 4.5 0 1 1 9 0V11"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-      />
-      <path
-        d="M7.25 11h9.5a2 2 0 0 1 2 2v5.5a2.25 2.25 0 0 1-2.25 2.25h-9A2.25 2.25 0 0 1 5.25 18.5V13a2 2 0 0 1 2-2Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 15.3v2.2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
       />
     </svg>
   )

@@ -1,20 +1,21 @@
 @font-face {
-  font-family: 'GFVewPenGray_K';
-  src: local('GF뉴연필고딕그레이'), local('GFVewPenGray_K');
+  font-family: 'NanumSquareNeo';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 300 900;
   font-display: swap;
+  src: url('https://hangeul.pstatic.net/hangeul_static/webfont/NanumSquareNeo/NanumSquareNeo-Variable.woff')
+    format('woff');
 }
 
 :root {
-  font-family: 'GFVewPenGray_K', system-ui, sans-serif;
+  font-family: 'NanumSquareNeo', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #1e293b;
   background:
-    radial-gradient(circle at 20% 0%, rgba(120, 168, 130, 0.18), transparent 38%),
-    radial-gradient(circle at 90% 10%, rgba(96, 140, 110, 0.1), transparent 40%),
-    linear-gradient(180deg, #e9f2e6 0%, #dfead9 48%, #d7e4d2 100%);
+    radial-gradient(circle at 20% 0%, rgba(106, 150, 214, 0.18), transparent 38%),
+    radial-gradient(circle at 90% 10%, rgba(91, 137, 201, 0.1), transparent 40%),
+    linear-gradient(180deg, #e8f0fa 0%, #dce8f5 48%, #d0e0f0 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

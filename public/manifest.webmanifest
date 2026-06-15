@@ -4,13 +4,13 @@
   "description": "빠르게 적고 저장하는 개인 메모장 앱",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#e9f2e6",
-  "theme_color": "#2f6f45",
+  "background_color": "#e8f0fa",
+  "theme_color": "#5b89c9",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/header-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

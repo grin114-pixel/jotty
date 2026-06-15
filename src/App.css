@@ -1,11 +1,11 @@
 :root {
-  --jotty-green: #2f6f45;
-  --jotty-green-mid: #4a8a60;
-  --jotty-green-soft: #5f9b72;
-  --jotty-green-muted: rgba(47, 111, 69, 0.14);
-  --jotty-outline: rgba(47, 111, 69, 0.22);
-  --jotty-text: #3f4e46;
-  --jotty-note-stack-gap: 54px;
+  --jotty-green: #3e5c8a;
+  --jotty-green-mid: #5b89c9;
+  --jotty-green-soft: #6a96d6;
+  --jotty-green-muted: rgba(91, 137, 201, 0.14);
+  --jotty-outline: rgba(91, 137, 201, 0.22);
+  --jotty-text: #3a4558;
+  --jotty-note-stack-gap: 40px;
 }
 
 .auth-shell,
@@ -63,10 +63,17 @@
 }
 
 .app-badge svg,
-.app-icon svg,
 .empty-illustration svg {
   width: 24px;
   height: 24px;
+}
+
+.app-icon-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  border-radius: 12px;
 }
 
 .field {
@@ -117,7 +124,8 @@
 .field input:focus,
 .field-textarea:focus,
 .pin-entry-input:focus,
-.note-edit-textarea:focus {
+.note-edit-textarea:focus,
+.note-edit-editor:focus {
   outline: none;
 }
 
@@ -204,15 +212,15 @@
 .primary-button {
   background: linear-gradient(135deg, var(--jotty-green-mid), var(--jotty-green));
   color: #fff;
-  box-shadow: 0 12px 24px rgba(45, 107, 71, 0.24);
+  box-shadow: 0 12px 24px rgba(62, 92, 138, 0.24);
 }
 
 .memo-save-button {
   font-size: 0.92rem;
   padding: 11px 18px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #6aa381, #509368);
-  box-shadow: 0 10px 20px rgba(64, 130, 95, 0.18);
+  background: linear-gradient(135deg, #6a96d6, #5b89c9);
+  box-shadow: 0 10px 20px rgba(91, 137, 201, 0.18);
 }
 
 .primary-button:disabled,
@@ -272,8 +280,8 @@
   gap: 12px;
   padding: 14px;
   border-radius: 20px;
-  background: #f4faf4;
-  border: 1px solid #dfece0;
+  background: #f4f7fb;
+  border: 1px solid #dfe8f2;
 }
 
 .pin-change-panel button {
@@ -292,7 +300,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 28px;
 }
 
 .topbar-title {
@@ -335,13 +343,22 @@
   height: 14px;
 }
 
-.app-icon,
+.app-icon {
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: transparent;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
 .empty-illustration {
   justify-content: center;
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(79, 143, 102, 0.2), rgba(47, 111, 69, 0.12));
+  background: linear-gradient(135deg, rgba(106, 150, 214, 0.2), rgba(62, 92, 138, 0.12));
   color: var(--jotty-green-mid);
 }
 
@@ -364,7 +381,7 @@
   top: 16px;
   z-index: 5;
   margin-bottom: 16px;
-  background: #1f3d2a;
+  background: #2d3e50;
   color: #fff;
   border-radius: 16px;
   padding: 12px 16px;
@@ -392,6 +409,60 @@
   border-radius: 22px;
   box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
   overflow: visible;
+}
+
+.memo-format-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  margin-top: 4px;
+}
+
+.note-format-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 0 0;
+  margin-top: 4px;
+}
+
+.format-button {
+  border: 1px solid #e7d5d5;
+  background: #fff;
+  color: #64748b;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.format-button:hover {
+  transform: translateY(-1px);
+}
+
+.format-button:focus-visible {
+  outline: 3px solid var(--jotty-green-muted);
+  outline-offset: 2px;
+}
+
+.format-button--red {
+  color: #dc2626;
+  border-color: #f0caca;
+  background: #fff7f7;
+}
+
+.format-button--red:hover {
+  background: #feecec;
+  border-color: #e8a8a8;
+}
+
+.note-text-red {
+  color: #dc2626;
 }
 
 .memo-input-stack {
@@ -479,7 +550,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  border: 1px solid #dbe8dd;
+  border: 1px solid #dbe4ef;
   background: #fff;
   color: var(--jotty-green-mid);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -507,7 +578,8 @@
   line-height: 1.65;
 }
 
-.note-edit-textarea {
+.note-edit-textarea,
+.note-edit-editor {
   font-size: 99%;
   line-height: 1.65;
   font-weight: 400;
@@ -521,6 +593,17 @@
   overflow: hidden;
   background: #fff;
   color: var(--jotty-text);
+}
+
+.note-edit-editor {
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+
+.note-edit-editor:empty::before {
+  content: '';
 }
 
 .empty-state {
