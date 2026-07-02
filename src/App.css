@@ -178,6 +178,30 @@
   min-width: 0;
 }
 
+.note-date-edit {
+  flex: 1;
+  min-width: 0;
+}
+
+.note-date-input {
+  width: 100%;
+  max-width: 180px;
+  box-sizing: border-box;
+  border: 1px solid #d8dee9;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 80%;
+  color: var(--jotty-text);
+  background: #fff;
+}
+
+.note-date-input:focus {
+  outline: none;
+  border-color: var(--jotty-green-mid);
+  box-shadow: 0 0 0 3px var(--jotty-green-muted);
+}
+
 .error-text {
   color: #dc2626;
   margin: 0;
@@ -516,9 +540,46 @@
   gap: 0;
 }
 
+.day-separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 18px;
+  color: var(--jotty-green-mid);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.day-separator::before,
+.day-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--jotty-outline);
+}
+
 .note-white-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
+}
+
+.note-index-badge {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--jotty-green-soft), var(--jotty-green-mid));
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(62, 92, 138, 0.28);
 }
 
 .note-body-surface {

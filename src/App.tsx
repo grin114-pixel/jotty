@@ -1,11 +1,4 @@
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react'
+import { type FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import './App.css'
 import { FormattedNoteEditor } from './components/FormattedNoteEditor'
 import {
@@ -31,9 +24,38 @@ function formatDateLabel(value: string) {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
   }).format(new Date(value))
+}
+
+function formatDayKey(value: string) {
+  const date = new Date(value)
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}
+
+function formatDaySeparatorLabel(value: string) {
+  return new Intl.DateTimeFormat('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    weekday: 'short',
+  }).format(new Date(value))
+}
+
+function toDateInputValue(value: string) {
+  const date = new Date(value)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function toUpdatedCreatedAt(dateInputValue: string, originalCreatedAt: string) {
+  const [year, month, day] = dateInputValue.split('-').map(Number)
+  const updated = new Date(originalCreatedAt)
+  updated.setFullYear(year, month - 1, day)
+
+  return updated.toISOString()
 }
 
 function sortNotes(notes: NoteRecord[]) {
@@ -58,6 +80,7 @@ function App() {
   const [isSavingNote, setIsSavingNote] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [editDraft, setEditDraft] = useState('')
+  const [editDateDraft, setEditDateDraft] = useState('')
   const [isSavingEdit, setIsSavingEdit] = useState(false)
   const [dataError, setDataError] = useState('')
   const [statusMessage, setStatusMessage] = useState('')
@@ -120,11 +143,13 @@ function App() {
   function startEdit(note: NoteRecord) {
     setEditingNoteId(note.id)
     setEditDraft(note.content)
+    setEditDateDraft(toDateInputValue(note.created_at))
   }
 
   function cancelEdit() {
     setEditingNoteId(null)
     setEditDraft('')
+    setEditDateDraft('')
   }
 
   async function handleSaveEdit(noteId: string) {
@@ -140,12 +165,29 @@ function App() {
       return
     }
 
+    if (!editDateDraft) {
+      setStatusMessage('날짜를 선택해 주세요.')
+      return
+    }
+
+    const editingNote = notes.find((note) => note.id === noteId)
+
+    if (!editingNote) {
+      return
+    }
+
     setIsSavingEdit(true)
     setDataError('')
 
     try {
       const supabase = getSupabaseClient()
-      const { error } = await supabase.from('jotty_notes').update({ content }).eq('id', noteId)
+      const { error } = await supabase
+        .from('jotty_notes')
+        .update({
+          content,
+          created_at: toUpdatedCreatedAt(editDateDraft, editingNote.created_at),
+        })
+        .eq('id', noteId)
 
       if (error) {
         throw error
@@ -153,6 +195,7 @@ function App() {
 
       setEditingNoteId(null)
       setEditDraft('')
+      setEditDateDraft('')
       setStatusMessage('메모를 수정했어요.')
       await loadNotes()
     } catch (error) {
@@ -272,7 +315,7 @@ function App() {
       <header className="topbar">
         <div className="topbar-title">
           <div className="app-icon">
-            <img src="/header-icon.png" alt="" className="app-icon-image" />
+            <img src="/app-icon-192.png" alt="" className="app-icon-image" />
           </div>
           <h1>Dear English</h1>
         </div>
@@ -352,9 +395,22 @@ function App() {
 
           {!isLoadingNotes ? (
             <div className="note-list">
-              {notes.map((note) => (
+              {notes.map((note, index) => {
+                const previousNote = index > 0 ? notes[index - 1] : null
+                const showDaySeparator =
+                  !previousNote || formatDayKey(previousNote.created_at) !== formatDayKey(note.created_at)
+
+                return (
                 <div key={note.id} className="note-outer">
+                  {showDaySeparator ? (
+                    <div className="day-separator" role="separator">
+                      <span>{formatDaySeparatorLabel(note.created_at)}</span>
+                    </div>
+                  ) : null}
                   <div className="note-white-wrap">
+                    <span className="note-index-badge" aria-hidden="true">
+                      {notes.length - index}
+                    </span>
                     <div className={`note-card note-body-surface${editingNoteId === note.id ? ' note-card--editing' : ''}`}>
                       {editingNoteId === note.id ? (
                         <>
@@ -382,7 +438,19 @@ function App() {
                     </div>
                   </div>
                   <div className="note-meta-row">
-                    <span className="note-date">{formatDateLabel(note.created_at)}</span>
+                    {editingNoteId === note.id ? (
+                      <label className="note-date-edit">
+                        <span className="sr-only">메모 날짜</span>
+                        <input
+                          type="date"
+                          className="note-date-input"
+                          value={editDateDraft}
+                          onChange={(event) => setEditDateDraft(event.target.value)}
+                        />
+                      </label>
+                    ) : (
+                      <span className="note-date">{formatDateLabel(note.created_at)}</span>
+                    )}
                     <div className="note-card-actions">
                       {editingNoteId === note.id ? (
                         <>
@@ -430,7 +498,8 @@ function App() {
                     </div>
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           ) : null}
         </section>
